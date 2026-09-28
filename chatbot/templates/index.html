@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FISHING BOT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chivo:wght@700;900&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep: #0b3c5d;
+      --deep-soft: #4f7590;
+      --foam: #eaf4f4;
+      --water: #cfe6ec;
+      --bobber: #e4382f;
+      --sun: #f7c948;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: "Nunito Sans", system-ui, sans-serif;
+      color: var(--deep);
+      background: linear-gradient(180deg, var(--foam) 0%, var(--water) 100%);
+    }
+
+    header {
+      background: var(--deep);
+      color: var(--foam);
+      padding: 18px clamp(20px, 5vw, 64px);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 6px solid var(--sun);
+    }
+    .fish { width: 64px; height: 40px; flex-shrink: 0; }
+    header h1 {
+      font-family: "Chivo", sans-serif;
+      font-weight: 900;
+      font-size: 2rem;
+      line-height: 1;
+    }
+    header p { font-size: 0.9rem; opacity: 0.8; margin-top: 4px; }
+
+    .layout {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 280px;
+    }
+
+    .chat { display: flex; flex-direction: column; min-height: 0; }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px clamp(20px, 4vw, 48px) 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      scroll-behavior: smooth;
+    }
+
+    .msg { max-width: 680px; line-height: 1.65; font-size: 1.02rem; }
+    .msg.bot {
+      align-self: flex-start;
+      background: var(--white);
+      border-radius: 4px 16px 16px 16px;
+      padding: 16px 22px 16px 28px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 0 var(--deep-soft);
+    }
+    .msg.bot::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 8px;
+      background: repeating-linear-gradient(180deg, var(--bobber) 0 12px, var(--white) 12px 24px);
+      border-right: 2px solid var(--deep);
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--deep);
+      color: var(--foam);
+      border-radius: 16px 16px 4px 16px;
+      padding: 12px 18px;
+    }
+    .msg.error { color: var(--bobber); }
+
+    .msg p + p, .msg p + ul, .msg p + ol, .msg ul + p, .msg ol + p,
+    .msg h3 + p, .msg h3 + ul, .msg h3 + ol, .msg p + h3, .msg ul + h3, .msg ol + h3 { margin-top: 10px; }
+    .msg h3 { font-family: "Chivo", sans-serif; font-weight: 700; font-size: 1.1rem; }
+    .msg ul, .msg ol { padding-left: 22px; }
+    .msg li + li { margin-top: 4px; }
+    .msg strong { font-weight: 700; box-shadow: inset 0 -6px 0 rgba(247, 201, 72, 0.6); }
+
+    .bobber { position: relative; display: inline-block; width: 40px; height: 34px; }
+    .bobber i {
+      position: absolute;
+      left: 13px;
+      top: 2px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, var(--bobber) 50%, var(--white) 50%);
+      border: 2px solid var(--deep);
+      animation: bob 1.6s infinite ease-in-out;
+    }
+    .bobber::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
+      height: 8px;
+      border: 2px solid var(--deep-soft);
+      border-radius: 50%;
+      opacity: 0.5;
+      animation: ripple 1.6s infinite ease-out;
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(10px); }
+    }
+    @keyframes ripple {
+      0% { transform: scale(0.5); opacity: 0.7; }
+      100% { transform: scale(1.1); opacity: 0; }
+    }
+
+    .composer { display: flex; gap: 12px; padding: 14px clamp(20px, 4vw, 48px) 6px; }
+    .composer input {
+      flex: 1;
+      font: inherit;
+      font-size: 1.02rem;
+      padding: 14px 20px;
+      border: 2px solid var(--deep);
+      border-radius: 999px;
+      background: var(--white);
+      color: var(--deep);
+    }
+    .composer input:focus { outline: none; box-shadow: 0 0 0 4px var(--sun); }
+    .composer button {
+      font-family: "Chivo", sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 0 28px;
+      border: 2px solid var(--deep);
+      border-radius: 999px;
+      background: var(--sun);
+      color: var(--deep);
+      cursor: pointer;
+    }
+    .composer button:hover { background: var(--bobber); border-color: var(--bobber); color: var(--white); }
+    .composer button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:focus-visible { outline: 3px solid var(--bobber); outline-offset: 2px; }
+
+    .note { font-size: 0.8rem; color: var(--deep-soft); padding: 0 clamp(20px, 4vw, 48px) 14px; }
+
+    .tackle {
+      background: var(--deep);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+    .tackle h2 {
+      font-family: "Chivo", sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--sun);
+    }
+    .trays { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .tray {
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.95rem;
+      min-height: 64px;
+      color: var(--foam);
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid var(--deep-soft);
+      border-radius: 6px;
+      box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .tray:hover { background: var(--sun); border-color: var(--sun); color: var(--deep); }
+
+    @media (max-width: 820px) {
+      .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+      .tackle { order: -1; padding: 12px 20px; flex-direction: row; align-items: center; overflow-x: auto; }
+      .tackle h2 { display: none; }
+      .trays { display: flex; gap: 8px; }
+      .tray { min-height: 0; padding: 8px 16px; white-space: nowrap; }
+      header h1 { font-size: 1.6rem; }
+      header p { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .bobber i, .bobber::after { animation: none; }
+      .messages { scroll-behavior: auto; }
+      .tray { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <svg class="fish" viewBox="0 0 64 40" aria-hidden="true">
+      <path d="M4 20C16 4 36 4 46 20C36 36 16 36 4 20Z" fill="#f7c948" stroke="#eaf4f4" stroke-width="2.5"/>
+      <path d="M44 20L62 6V34Z" fill="#e4382f" stroke="#eaf4f4" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="16" cy="17" r="2.5" fill="#0b3c5d"/>
+    </svg>
+    <div>
+      <h1>FISHING BOT</h1>
+      <p>Learn species, gear, baits, knots, and technique</p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <main class="chat">
+      <div class="messages" id="messages" aria-live="polite"></div>
+      <div class="composer">
+        <input id="input" type="text" placeholder="Ask a fishing question" autocomplete="off" aria-label="Your message">
+        <button id="send">Send</button>
+      </div>
+      <p class="note">For learning only. Always check local fishing rules and licences.</p>
+    </main>
+
+    <aside class="tackle">
+      <h2>Tackle box</h2>
+      <nav class="trays" aria-label="Fishing topics">
+        <button class="tray" data-question="What baits work best for beginners and why?">Baits</button>
+        <button class="tray" data-question="How do I tie an improved clinch knot step by step?">Knots</button>
+        <button class="tray" data-question="How do I choose my first rod and reel?">Gear</button>
+        <button class="tray" data-question="How do I identify common freshwater game fish?">Species</button>
+        <button class="tray" data-question="What are the basics of casting a spinning rod?">Casting</button>
+        <button class="tray" data-question="How do tides and moon phases affect fishing?">Tides</button>
+        <button class="tray" data-question="How should I release a fish safely?">Release</button>
+        <button class="tray" data-question="What safety gear do I need when fishing from a boat?">Safety</button>
+      </nav>
+    </aside>
+  </div>
+
+  <script>
+    const messagesEl = document.getElementById("messages");
+    const inputEl = document.getElementById("input");
+    const sendBtn = document.getElementById("send");
+    const history = [];
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function renderMarkdown(text) {
+      const lines = escapeHtml(text).split("\n");
+      let html = "";
+      let list = null;
+
+      const closeList = () => {
+        if (list) { html += `</${list}>`; list = null; }
+      };
+      const inline = (s) => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+      for (const raw of lines) {
+        const line = raw.trim();
+        const heading = line.match(/^#{1,4}\s+(.*)/);
+        const bullet = line.match(/^[-*]\s+(.*)/);
+        const numbered = line.match(/^\d+[.)]\s+(.*)/);
+
+        if (bullet || numbered) {
+          const type = bullet ? "ul" : "ol";
+          if (list !== type) { closeList(); html += `<${type}>`; list = type; }
+          html += `<li>${inline((bullet || numbered)[1])}</li>`;
+        } else if (heading) {
+          closeList();
+          html += `<h3>${inline(heading[1])}</h3>`;
+        } else if (line) {
+          closeList();
+          html += `<p>${inline(line)}</p>`;
+        }
+      }
+      closeList();
+      return html;
+    }
+
+    function addMessage(role, content, isError = false) {
+      const el = document.createElement("div");
+      el.className = `msg ${role}${isError ? " error" : ""}`;
+      if (role === "bot") el.innerHTML = renderMarkdown(content);
+      else el.textContent = content;
+      messagesEl.appendChild(el);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return el;
+    }
+
+    function setLoading(loading) {
+      sendBtn.disabled = loading;
+      inputEl.disabled = loading;
+      if (!loading) inputEl.focus();
+    }
+
+    async function sendMessage(text) {
+      text = text.trim();
+      if (!text) return;
+
+      addMessage("user", text);
+      history.push({ role: "user", text });
+      inputEl.value = "";
+      setLoading(true);
+
+      const typing = addMessage("bot", "");
+      typing.innerHTML = '<span class="bobber"><i></i></span>';
+
+      try {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: history }),
+        });
+        const data = await response.json();
+        typing.remove();
+
+        if (!response.ok) throw new Error(data.error || "Something went wrong.");
+
+        addMessage("bot", data.reply);
+        history.push({ role: "bot", text: data.reply });
+      } catch (error) {
+        typing.remove();
+        history.pop();
+        addMessage("bot", error.message, true);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    sendBtn.addEventListener("click", () => sendMessage(inputEl.value));
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") sendMessage(inputEl.value);
+    });
+    document.querySelectorAll(".tray").forEach((tray) =>
+      tray.addEventListener("click", () => sendMessage(tray.dataset.question))
+    );
+
+    addMessage("bot", "Hello, I'm FISHING BOT. Ask me about fish species, baits, gear, knots, or technique, and tell me where you fish so I can be more specific.");
+  </script>
+</body>
+</html>
